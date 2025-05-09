@@ -2,10 +2,12 @@ package com.br.shortener.url.adapters;
 
 import com.br.shortener.url.ports.outbound.EncrypterPort;
 import com.br.shortener.url.exceptions.NoSuchAlgorithmException;
+import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 
+@Component
 public class EncrypterAdapter implements EncrypterPort {
 
     private final String encryptMethod;
