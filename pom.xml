@@ -52,6 +52,13 @@
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>1.7.0</version>
 		</dependency>
+
+		<!-- Base62 Id Generator -->
+		<dependency>
+			<groupId>com.devskiller.friendly-id</groupId>
+			<artifactId>friendly-id</artifactId>
+			<version>1.1.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
