@@ -1,8 +1,9 @@
-package com.br.shortener.url.adapters;
+package com.br.shortener.url.infrastructure.adapters;
 
-import com.br.shortener.url.ports.outbound.EncrypterPort;
+import com.br.shortener.url.domain.ports.outbound.EncrypterPort;
 import com.br.shortener.url.exceptions.NoSuchAlgorithmException;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -12,7 +13,7 @@ public class EncrypterAdapter implements EncrypterPort {
 
     private final String encryptMethod;
 
-    public EncrypterAdapter(String encryptMethod) {
+    public EncrypterAdapter(@Value("${encrypt.method:MD5}") String encryptMethod) {
         this.encryptMethod = encryptMethod;
     }
 
@@ -28,7 +29,6 @@ public class EncrypterAdapter implements EncrypterPort {
             return ConvertMessageIntoHexValue(signumRepresentation);
         }
 
-        // For specifying wrong message digest algorithms
         catch (java.security.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException("Invalid or unsupported commit algorithm: ", e);
         }
