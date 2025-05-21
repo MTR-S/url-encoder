@@ -1,10 +1,17 @@
 package com.br.shortener.url.domain.services;
 
-import com.br.shortener.url.ports.outbound.EncrypterPort;
-import com.br.shortener.url.ports.outbound.UrlEncoderPort;
+import com.br.shortener.url.domain.ports.outbound.EncrypterPort;
+import com.br.shortener.url.domain.ports.outbound.UrlEncoderPort;
+import com.devskiller.friendly_id.FriendlyId;
+import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+import java.util.UUID;
 
 // Encapsular depois esses metodos em um outro -> codificador_de_url()
 
+@Service
 public class UrlShortenerService {
     UrlEncoderPort urlEncoder;
     EncrypterPort encrypter;
@@ -29,11 +36,11 @@ public class UrlShortenerService {
         return "";
     }
 
-    private String md5Hash(String toBeEncrypted) {
+    private String hashEncrypt(String toBeEncrypted) {
         return encrypter.encrypt(toBeEncrypted);
     }
 
-    private String base62Encode(String number) {
+    private String base62Encode(String toBeEncoded) {
 
         return "";
     }
@@ -46,7 +53,36 @@ public class UrlShortenerService {
 
     public String generateShortUrl(String number) {
         // 7 characters string
-        return "";
+        String urlUtf8Pattern =  urlEncoder.encodeToUtf8(number);
+
+        String urlEncrypted = encrypter.encrypt(urlUtf8Pattern);
+        try {
+            //tratar excesoes
+            UUID uuidFromUrl = UUID.nameUUIDFromBytes(urlEncrypted.getBytes(StandardCharsets.UTF_8));
+            String friendlyIdFromUrlUuid = FriendlyId.toFriendlyId(uuidFromUrl);
+
+
+            return swapAndPickRandomNumbers(friendlyIdFromUrlUuid, "InputToBePutAtApplicationYaml");
+            //Verificar se faz sentido o swap ficar aqui na arquitetura
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "null";
     }
 
+    public String swapAndPickRandomNumbers(String stringWith22Characters, String seedInput) {
+        long seed = seedInput.hashCode();
+        Random random = new Random(seed);
+
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < 7; i++) {
+            int randomIndex = random.nextInt(stringWith22Characters.length());
+            result.append(stringWith22Characters.charAt(randomIndex));
+        }
+
+        return result.toString();
+    }
 }

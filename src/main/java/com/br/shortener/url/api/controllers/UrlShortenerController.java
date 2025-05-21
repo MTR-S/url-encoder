@@ -1,7 +1,8 @@
-package com.br.shortener.url.domain.controllers;
+package com.br.shortener.url.api.controllers;
 
-import com.br.shortener.url.domain.dto.ApiErrorResponse;
+import com.br.shortener.url.api.dto.ApiErrorResponse;
 
+import com.br.shortener.url.domain.services.UrlShortenerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,21 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @RestController
 @RequestMapping("/api")
 public class UrlShortenerController {
+
+    UrlShortenerService urlShortenerService;
+
+    public UrlShortenerController(UrlShortenerService urlShortenerService) {
+        this.urlShortenerService = urlShortenerService;
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<Void> getTest() {
+        System.out.println(urlShortenerService.generateShortUrl("https://www.youtube.com/"));
+
+        /*Fluxo de encriptação da url*/
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
     @Operation(summary = "Authenticate user and return token")
     //@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
