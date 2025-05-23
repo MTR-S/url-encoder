@@ -47,12 +47,12 @@ public class EncrypterAdapter implements EncrypterPort {
     }
 
     private String ConvertMessageIntoHexValue(BigInteger signumRepresentation) {
-        String hashtext = signumRepresentation.toString(16);
+        StringBuilder hashtext = new StringBuilder(signumRepresentation.toString(16));
 
         while (hashtext.length() < 32) {
-            hashtext = "0" + hashtext;
+            hashtext.insert(0, "0");
         }
 
-        return hashtext;
+        return hashtext.toString();
     }
 }
