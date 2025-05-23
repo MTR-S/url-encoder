@@ -2,11 +2,13 @@ package com.br.shortener.url.domain.services;
 
 import com.br.shortener.url.domain.ports.outbound.EncrypterPort;
 import com.br.shortener.url.domain.ports.outbound.UrlEncoderPort;
+import com.br.shortener.url.domain.ports.outbound.SwapperPort;
+import com.br.shortener.url.exceptions.InvalidUuidException;
 import com.devskiller.friendly_id.FriendlyId;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
+
 import java.util.UUID;
 
 // Encapsular depois esses metodos em um outro -> codificador_de_url()
@@ -15,15 +17,14 @@ import java.util.UUID;
 public class UrlShortenerService {
     UrlEncoderPort urlEncoder;
     EncrypterPort encrypter;
+    SwapperPort swapper;
 
     public UrlShortenerService(UrlEncoderPort urlEncoderAdapter,
-                               EncrypterPort encrypter) {
+                               EncrypterPort encrypter,
+                               SwapperPort swapper) {
         this.urlEncoder = urlEncoderAdapter;
         this.encrypter = encrypter;
-    }
-
-    private String encodeToUtf8(String url) {
-        return urlEncoder.encodeToUtf8(url);
+        this.swapper = swapper;
     }
 
     private String appendSequencialNumber(String number) {
@@ -36,53 +37,18 @@ public class UrlShortenerService {
         return "";
     }
 
-    private String hashEncrypt(String toBeEncrypted) {
-        return encrypter.encrypt(toBeEncrypted);
-    }
-
-    private String base62Encode(String toBeEncoded) {
-
-        return "";
-    }
-
-    // Verificar possibilidade de separar esse método
-    private String swapAndPick(String number) {
-
-        return "";
-    }
-
-    public String generateShortUrl(String number) {
-        // 7 characters string
-        String urlUtf8Pattern =  urlEncoder.encodeToUtf8(number);
-
-        String urlEncrypted = encrypter.encrypt(urlUtf8Pattern);
+    public String generateShortUrl(String originalUrl) {
         try {
-            //tratar excesoes
-            UUID uuidFromUrl = UUID.nameUUIDFromBytes(urlEncrypted.getBytes(StandardCharsets.UTF_8));
-            String friendlyIdFromUrlUuid = FriendlyId.toFriendlyId(uuidFromUrl);
+            String utf8Encoded = urlEncoder.encodeToUtf8(originalUrl);
+            String encrypted = encrypter.encrypt(utf8Encoded);
 
+            UUID uuid = UUID.nameUUIDFromBytes(encrypted.getBytes(StandardCharsets.UTF_8));
+            String friendlyId = FriendlyId.toFriendlyId(uuid);
 
-            return swapAndPickRandomNumbers(friendlyIdFromUrlUuid, "InputToBePutAtApplicationYaml");
-            //Verificar se faz sentido o swap ficar aqui na arquitetura
-
+            return swapper.pickRandomNumbers(friendlyId, originalUrl, 7);
+        } catch (InvalidUuidException e) {
+            throw new InvalidUuidException("Error creating UUID: " + e);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return "null";
     }
 
-    public String swapAndPickRandomNumbers(String stringWith22Characters, String seedInput) {
-        long seed = seedInput.hashCode();
-        Random random = new Random(seed);
-
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < 7; i++) {
-            int randomIndex = random.nextInt(stringWith22Characters.length());
-            result.append(stringWith22Characters.charAt(randomIndex));
-        }
-
-        return result.toString();
-    }
 }

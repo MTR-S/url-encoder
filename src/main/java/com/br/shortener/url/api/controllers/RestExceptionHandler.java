@@ -1,5 +1,6 @@
 package com.br.shortener.url.api.controllers;
 
+import com.br.shortener.url.exceptions.InvalidUuidException;
 import com.br.shortener.url.exceptions.UnsupportedEncodingException;
 import com.br.shortener.url.exceptions.NoSuchAlgorithmException;
 
@@ -13,6 +14,11 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @ControllerAdvice
 public class RestExceptionHandler {
+    @ExceptionHandler(InvalidUuidException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidUuidException(InvalidUuidException e) {
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(
+                new ApiErrorResponse(INTERNAL_SERVER_ERROR.value(), "Error creating UUID: " + e.getMessage()));
+    }
 
     @ExceptionHandler(UnsupportedEncodingException.class)
     public ResponseEntity<ApiErrorResponse> handleUnsupportedEncodingException(UnsupportedEncodingException e) {
