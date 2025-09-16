@@ -59,6 +59,13 @@
 			<artifactId>friendly-id</artifactId>
 			<version>1.1.0</version>
 		</dependency>
+
+		<!-- Amazon Web Services SDKs -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.25.14</version> <!-- ou mais recente -->
+		</dependency>
 	</dependencies>
 
 	<build>
