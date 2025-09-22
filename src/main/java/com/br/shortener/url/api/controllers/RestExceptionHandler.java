@@ -24,7 +24,7 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleUnsupportedEncodingException(UnsupportedEncodingException e) {
         return ResponseEntity.status(BAD_REQUEST).body(
                 new ApiErrorResponse(BAD_REQUEST.value(), "Error encoding URL to UTF-8: " + e.getMessage()));
-            //test
+
     }
 
     @ExceptionHandler(NoSuchAlgorithmException.class)
