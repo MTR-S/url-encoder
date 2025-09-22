@@ -4,7 +4,7 @@ import com.br.shortener.url.api.dto.ApiErrorResponse;
 
 import com.br.shortener.url.domain.services.S3Service;
 import com.br.shortener.url.domain.services.UrlShortenerService;
-import com.br.shortener.url.infrastructure.web.dto.ShortenUrlResponse;
+import com.br.shortener.url.api.dto.ShortenUrlResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.net.URI;
 import java.util.Map;
 
 @RestController
@@ -28,13 +29,7 @@ public class UrlShortenerController {
         this.urlShortenerService = urlShortenerService;
         this.s3Service = s3Service;
     }
-/*
-    @GetMapping("/test")
-    public ResponseEntity<Void> getTest() {
-        System.out.println(urlShortenerService.generateShortUrl("https://www.youtube.com/"));
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-*/
+
     @Operation(summary = "Create a shorten url for a given long url")
     //@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
     @ApiResponse(responseCode = "401", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
@@ -61,50 +56,12 @@ public class UrlShortenerController {
     public ResponseEntity<ShortenUrlResponse> redirect(@PathVariable String shortCode) {
         String longUrl = s3Service.getUrl(shortCode);
 
+        if (longUrl == null || longUrl.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
         ShortenUrlResponse response = new ShortenUrlResponse("URL encurtada identificada", longUrl);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(longUrl)).body(response);
     }
-    /*
-    @Operation(summary = "Authenticate user and return token")
-    //@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
-    @ApiResponse(responseCode = "401", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @GetMapping("/links")
-    public ResponseEntity<Void> getAllShortenUrls() {
-        // GET para receber todas as url's encurtadas
-
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-    */
-    /*
-    @Operation(summary = "Authenticate user and return token")
-    //@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
-    @ApiResponse(responseCode = "401", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @DeleteMapping("/links/{shortCode}")
-    public ResponseEntity<Void> deleteShortenUrl(@PathVariable String shortCode) {
-        // DELETE para deletar alguma url encurtada
-
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-    */
-    /*
-    @Operation(summary = "Authenticate user and return token")
-    //@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
-    @ApiResponse(responseCode = "401", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    @PostMapping("/accessdata/{shortCode}")
-    public ResponseEntity<Void> shortenUrl(@PathVariable String shortCode) {
-
-
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-    */
 }

@@ -1,4 +1,4 @@
-package com.br.shortener.url.infrastructure.web.dto;
+package com.br.shortener.url.api.dto;
 
 import lombok.Getter;
 import lombok.Setter;
