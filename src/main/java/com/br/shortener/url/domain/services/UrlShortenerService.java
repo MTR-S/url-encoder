@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-
-// Encapsular depois esses metodos em um outro -> codificador_de_url()
 
 @Service
 public class UrlShortenerService {
@@ -25,16 +25,6 @@ public class UrlShortenerService {
         this.urlEncoder = urlEncoderAdapter;
         this.encrypter = encrypter;
         this.swapper = swapper;
-    }
-
-    private String appendSequencialNumber(String number) {
-        /* *
-        * Avaliar se vale a pena
-        * Seria necessário caso fosse decidido que urls iguais feitas por requisições diferentes
-        * necessitam serem diferentes (decidir)
-        * */
-
-        return "";
     }
 
     public String generateShortUrl(String originalUrl) {
@@ -51,4 +41,24 @@ public class UrlShortenerService {
         }
     }
 
+    public Long calculateExpirationTime(String expirationTime) {
+        if (expirationTime == null || expirationTime.isBlank()) {
+            return null;
+        }
+
+        expirationTime = expirationTime.trim().toLowerCase();
+
+        // Número + unidade (minutes (m), hours (h), days (d))
+        long value = Long.parseLong(expirationTime.replaceAll("[^0-9]", ""));
+        String unit = expirationTime.replaceAll("[0-9]", "");
+
+        Instant now = Instant.now();
+
+        return switch (unit) {
+            case "m" -> now.plus(value, ChronoUnit.MINUTES).getEpochSecond();
+            case "h" -> now.plus(value, ChronoUnit.HOURS).getEpochSecond();
+            case "d" -> now.plus(value, ChronoUnit.DAYS).getEpochSecond();
+            default -> throw new IllegalArgumentException("Invalid expiration time format. Use m/h/d. Ex: 10m, 2h, 3d");
+        };
+    }
 }

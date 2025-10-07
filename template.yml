@@ -1,54 +1,62 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: URL Shortener com Spring + Lambda + API Gateway + S3
+Description: >
+  URL Shortener com Spring + Lambda + API Gateway + DynamoDB.
 
 Globals:
   Function:
     Timeout: 60
     MemorySize: 512
-    Runtime: java21
-    Handler: com.br.shortener.url.infrastructure.handlers.aws.lambda.StreamLambdaHandler::handleRequest
-    Environment:
-      Variables:
-        BUCKET_NAME: !Ref ExistingBucketName
-
-Parameters:
-  ExistingBucketName:
-    Type: String
-    Description: Nome de um bucket S3 já existente
 
 Resources:
-  ShortenUrlFunction:
+  UrlShortenerApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+
+  UrlShortenerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: shorten-url-fn
+      FunctionName: url-shortener-app-fn
       CodeUri: .
+      Handler: com.br.shortener.url.infrastructure.handlers.aws.lambda.StreamLambdaHandler::handleRequest
+      Runtime: java21
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UrlMappingsTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref UrlMappingsTable
       Events:
-        ShortenApi:
+        ShortenUrl:
           Type: Api
           Properties:
+            RestApiId: !Ref UrlShortenerApi
             Path: /api/shorten
             Method: post
-      Policies:
-        - S3CrudPolicy:
-            BucketName: !Ref ExistingBucketName
-
-  RedirectUrlFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: redirect-url-fn
-      CodeUri: .
-      Events:
-        RedirectApi:
+        RedirectUrl:
           Type: Api
           Properties:
+            RestApiId: !Ref UrlShortenerApi
             Path: /api/{shortCode}
             Method: get
-      Policies:
-        - S3ReadPolicy:
-            BucketName: !Ref ExistingBucketName
+
+  UrlMappingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UrlMappings
+      AttributeDefinitions:
+        - AttributeName: shortCode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shortCode
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expirationTime
+        Enabled: true
 
 Outputs:
   ApiUrl:
-    Description: Endpoint da API
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Description: "URL base do API Gateway para a aplicação"
+    Value: !Sub "https://${UrlShortenerApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

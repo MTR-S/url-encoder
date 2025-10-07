@@ -2,9 +2,11 @@ package com.br.shortener.url.api.controllers;
 
 import com.br.shortener.url.api.dto.ApiErrorResponse;
 
-import com.br.shortener.url.domain.services.S3Service;
+import com.br.shortener.url.api.dto.ShortenUrlRequest;
+import com.br.shortener.url.domain.ports.outbound.StorageUrlPort;
 import com.br.shortener.url.domain.services.UrlShortenerService;
 import com.br.shortener.url.api.dto.ShortenUrlResponse;
+import com.br.shortener.url.domain.ports.outbound.StorageUrlPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +24,15 @@ import java.util.Map;
 public class UrlShortenerController {
 
     UrlShortenerService urlShortenerService;
-    S3Service s3Service;
+    StorageUrlPort urlStorage;
+
 
     public UrlShortenerController(UrlShortenerService urlShortenerService,
-                                  S3Service s3Service) {
+                                  StorageUrlPort urlStorage
+                                  ) {
         this.urlShortenerService = urlShortenerService;
-        this.s3Service = s3Service;
+        this.urlStorage = urlStorage;
+
     }
 
     @Operation(summary = "Create a shorten url for a given long url")
@@ -36,11 +41,13 @@ public class UrlShortenerController {
     @ApiResponse(responseCode = "404", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @PostMapping("/shorten")
-    public ResponseEntity<ShortenUrlResponse> postShortenUrl(@RequestBody Map<String, String> request) {
-        String longUrl = request.get("url");
+    public ResponseEntity<ShortenUrlResponse> postShortenUrl(@RequestBody ShortenUrlRequest request) {
+        String longUrl = request.getUrl();
         String shortCode = urlShortenerService.generateShortUrl(longUrl);
+        // optionalExpirationTime Regex = Xd, Xm and Xs (X is a time quantifier, ex: 10d = 10 days)
+        Long optionalExpirationTime = urlShortenerService.calculateExpirationTime(request.getExpirationTime());
 
-        s3Service.saveUrl(shortCode, longUrl);
+        urlStorage.saveUrl(shortCode, longUrl, optionalExpirationTime);
 
         ShortenUrlResponse response = new ShortenUrlResponse("URL criada com sucesso", shortCode);
 
@@ -54,7 +61,7 @@ public class UrlShortenerController {
     @ApiResponse(responseCode = "500", content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @GetMapping("/{shortCode}")
     public ResponseEntity<ShortenUrlResponse> redirect(@PathVariable String shortCode) {
-        String longUrl = s3Service.getUrl(shortCode);
+        String longUrl = urlStorage.getUrl(shortCode);
 
         if (longUrl == null || longUrl.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
