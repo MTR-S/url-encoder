@@ -1,4 +1,4 @@
-package com.br.shortener.url.domain.dto;
+package com.br.shortener.url.api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

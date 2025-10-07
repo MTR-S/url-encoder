@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: URL Shortener com Spring + Lambda + API Gateway + S3
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512
+    Runtime: java21
+    Handler: com.br.shortener.url.infrastructure.handlers.aws.lambda.StreamLambdaHandler::handleRequest
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref ExistingBucketName
+
+Parameters:
+  ExistingBucketName:
+    Type: String
+    Description: Nome de um bucket S3 já existente
+
+Resources:
+  ShortenUrlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: shorten-url-fn
+      CodeUri: .
+      Events:
+        ShortenApi:
+          Type: Api
+          Properties:
+            Path: /api/shorten
+            Method: post
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref ExistingBucketName
+
+  RedirectUrlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: redirect-url-fn
+      CodeUri: .
+      Events:
+        RedirectApi:
+          Type: Api
+          Properties:
+            Path: /api/{shortCode}
+            Method: get
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref ExistingBucketName
+
+Outputs:
+  ApiUrl:
+    Description: Endpoint da API
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

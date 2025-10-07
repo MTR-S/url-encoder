@@ -52,6 +52,26 @@
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>1.7.0</version>
 		</dependency>
+
+		<!-- Base62 Id Generator -->
+		<dependency>
+			<groupId>com.devskiller.friendly-id</groupId>
+			<artifactId>friendly-id</artifactId>
+			<version>1.1.0</version>
+		</dependency>
+
+		<!-- Amazon Web Services SDKs -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.25.14</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.amazonaws.serverless</groupId>
+			<artifactId>aws-serverless-java-container-springboot3</artifactId>
+			<version>2.0.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -80,6 +100,31 @@
 					</excludes>
 				</configuration>
 			</plugin>
+
+		<!-- Shade plugin to exclude the embedded Tomcat-->
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-shade-plugin</artifactId>
+			<version>3.5.1</version>
+			<configuration>
+				<createDependencyReducedPom>false</createDependencyReducedPom>
+			</configuration>
+			<executions>
+				<execution>
+					<phase>package</phase>
+					<goals>
+						<goal>shade</goal>
+					</goals>
+					<configuration>
+						<artifactSet>
+							<excludes>
+								<exclude>org.apache.tomcat.embed:*</exclude>
+							</excludes>
+						</artifactSet>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
 		</plugins>
 	</build>
 
