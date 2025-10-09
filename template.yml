@@ -40,6 +40,13 @@ Resources:
             RestApiId: !Ref UrlShortenerApi
             Path: /api/{shortCode}
             Method: get
+        InfoUrl:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UrlShortenerApi
+            Path: /api/{shortCode}/info
+            Method: get
+
 
   UrlMappingsTable:
     Type: AWS::DynamoDB::Table
