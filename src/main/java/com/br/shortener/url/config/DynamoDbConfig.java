@@ -9,13 +9,22 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+import java.net.URI;
+
 @Configuration
 public class DynamoDbConfig {
     @Bean
     public DynamoDbClient dynamoDbClient() {
-        return DynamoDbClient.builder()
-                .region(Region.of("sa-east-1"))
-                .build();
+        if ("true".equals(System.getenv("AWS_SAM_LOCAL"))) {
+            return DynamoDbClient.builder()
+                    .endpointOverride(URI.create("http://dynamodb-local:8000"))
+                    .region(Region.of("sa-east-1"))
+                    .build();
+        } else {
+            return DynamoDbClient.builder()
+                    .region(Region.of("sa-east-1"))
+                    .build();
+        }
     }
 
     @Bean
@@ -28,6 +37,10 @@ public class DynamoDbConfig {
     @Bean
     public DynamoDbTable<UrlMapping> myItemTable(DynamoDbEnhancedClient enhancedClient) {
         String tableName = System.getenv("TABLE_NAME");
+
+        if (tableName == null || tableName.trim().isEmpty()) {
+            tableName = "UrlMappings";
+        }
 
         return enhancedClient.table(tableName, TableSchema.fromBean(UrlMapping.class));
     }
