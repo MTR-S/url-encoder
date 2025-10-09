@@ -2,6 +2,7 @@
 
 package com.br.shortener.url.infrastructure.adapters;
 
+import com.br.shortener.url.api.dto.ShortCodeInfoResponse;
 import com.br.shortener.url.domain.entity.dynamodb.UrlMapping;
 import com.br.shortener.url.domain.ports.outbound.StorageUrlPort;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class DynamoDbAdapter implements StorageUrlPort {
@@ -43,6 +45,47 @@ public class DynamoDbAdapter implements StorageUrlPort {
             newMapping.setExpirationTime(optionalExpirationTime);
         }
         return newMapping;
+    }
+
+    @Override
+    public ShortCodeInfoResponse getShortUrlInfo(String shortCode) {
+        GetItemRequest request = GetItemRequest.builder()
+                .tableName(tableName)
+                .key(Map.of("shortCode", AttributeValue.builder().s(shortCode).build()))
+                .build();
+
+        GetItemResponse response = dynamoDbClient.getItem(request);
+
+        Map<String, AttributeValue> item = response.item();
+
+        if (response.hasItem()) {
+            return createUrlResponse(item);
+        } else {
+            return null;
+        }
+    }
+
+    private ShortCodeInfoResponse createUrlResponse(Map<String, AttributeValue> item ) {
+        String longUrlResponse = Optional.ofNullable(item.get("longUrl"))
+                .map(AttributeValue::s)
+                .orElse(null);
+
+        String shortCodeResponse = Optional.ofNullable(item.get("shortCode"))
+                .map(AttributeValue::s)
+                .orElse(null);
+
+        Long numberOfAccessesResponse = Optional.ofNullable(item.get("numberOfAccesses"))
+                .map(AttributeValue::n)
+                .map(Long::parseLong)
+                .orElse(null);
+
+        Integer expirationTimeResponse = Optional.ofNullable(item.get("expirationTime"))
+                .map(AttributeValue::n)
+                .map(Integer::parseInt)
+                .orElse(null);
+
+        return new ShortCodeInfoResponse(longUrlResponse, shortCodeResponse, numberOfAccessesResponse, expirationTimeResponse);
+
     }
 
     @Override
@@ -90,4 +133,6 @@ public class DynamoDbAdapter implements StorageUrlPort {
                 .returnValues(ReturnValue.ALL_OLD)
                 .build();
     }
+
+
 }
